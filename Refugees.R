@@ -163,10 +163,10 @@ save_filename<-"Refugees"
                  ###############                                     ################
                  ####################################################################
 
+##We choose the second model 
 LDAfit<-mymodels[[2]]
 
 ###Add duplicates
-
 docnamestoadd<-(setdiff(docnames(dfm_press2),docnames(dfm_P)))
 deleted_dups<-dfm_press2[docnames(dfm_press2) %in% docnamestoadd,]
 deleted_doc_sim<-documents.compare(deleted_dups,dfm_P)
@@ -869,7 +869,6 @@ openxlsx::write.xlsx(all, "all.articles.country.newspaper.xlsx")
 
 
 ####Find frame usage by country
-
 for (mycountry in unique(all_articles_country_newspaper$country)) {
   print(mycountry)
   temp_country <- all_articles_country_newspaper[all_articles_country_newspaper$country == mycountry, ]
