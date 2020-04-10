@@ -1,2 +1,2 @@
 # 2016_Coverage_Refugees
-Supplementary code for: A Stranger to my Eyes: 2016 Framing of Refugees in the International (Under Review).
+Supplementary code for: A Stranger to my Eyes. An international comparative approach to refugees framing and its antecedents (Under Review).
