@@ -21,16 +21,7 @@ ref <- ref[, -5]
 
 colnames(ref)
 
-ref$conflict <- as.numeric(ref$conflict)
-
-ref$Distance_Country_1.km.<-as.numeric(ref$Distance_Country_1.km.)
-ref$Distance_Country_2.km.<-as.numeric(ref$Distance_Country_2.km.)
-ref<-ref[ref$Country!="Singapore",]
-ref$Government<-as.factor(ref$Government)
-ref2<-select(ref,-c(Origin_Refugees,Distance_to_Myanmar,Distance_to_SouthSudan,Distance_to_Syria,Population_Below_Poverty_Line))
-
 attach(ref)
-
 
 hist(moral)
 hist(conflict)
