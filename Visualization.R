@@ -562,350 +562,89 @@ all <- rbind(AUS, CAN, CHI, CYP, EGY, HK, IND, IRA, IRE, ISR, JOR, KEN1, LEB, MO
 
 openxlsx::write.xlsx(all, "all.articles.country.newspaper.xlsx")
 
+########################
+######### Calculate Frame Usage by Country
 
-####Find frame usage by country
-for (mycountry in unique(all_articles_country_newspaper$country)) {
+conflict <- c("Group.1","X0", "X2", "X7", "X11", "X13", "X15", "X17", "X21", "X25")
+moral <- c("Group.1","X4", "X5", "X6", "X9", "X10", "X12", "X14", "X16", "X19", 
+              "X22", "X24", "X27", "X28")
+politics <- c("Group.1","X1", "X3", "X8", "X18", "X20", "X23", "X26")
+
+
+country <- aggregate(x=meta_theta_df_refugees[,7:36],
+                     by=list(meta_theta_df_refugees$country),FUN="mean")
+
+frame_con <- country[, conflict]
+frame_con$conflict <- rowSums(frame_con[2:ncol(frame_con)])
+frame_con <- frame_con[, c(1, 11)]
+
+frame_mor <- country[, moral]
+frame_mor$moral <- rowSums(frame_mor[2:ncol(frame_mor)])
+frame_mor <- frame_mor[, c(1,15)]
+
+frame_pol <- country[, politics]
+frame_pol$politics <- rowSums(frame_pol[2:ncol(frame_pol)])
+frame_pol <- frame_pol[, c(1,9)]
+
+
+all_frames <- cbind(frame_con, frame_mor, frame_pol)
+all_frames <- all_frames[,c(1,2,4,6)]
+
+#######################
+##### Plot Frame Usage Across Time
+
+plots <- list()
+
+for (mycountry in unique(meta_theta_df_refugees$country)){
   print(mycountry)
-  temp_country <- all_articles_country_newspaper[all_articles_country_newspaper$country == mycountry, ]
-  temp_date <- aggregate(x=temp_country[,7:56],
-                         by=list(temp_country$date),FUN="mean")
-  frame1 <- temp_date[, c("Group.1","V2", "V6", "V10", "V25", "V32", "V34", "V42", "V44", "V45", 
-                          "V46", "V47", "V50")]
-  frame1$solutions <- rowSums(frame1[2:ncol(frame1)])
-  frame1_small <- frame1[, c(1, 14)]
-  frame2 <- temp_date[, c("Group.1", "V3", "V4", "V5", "V9", "V11", "V15", "V18", 
-                          "V19", "V20", "V26", "V27", "V29", "V30", "V33", "V35",
-                          "V38", "V41")]
-  frame2$conflict <- rowSums(frame2[2:ncol(frame2)])
-  frame2_small <- frame2[, c(1, 19)]
-  frame3 <- temp_date[, c("Group.1", "V1","V8","V12","V13","V17","V22","V23","V24","V28","V31",
-                          "V36","V37","V39","V43","V48","V49")]
-  frame3$politics <- rowSums(frame3[2:ncol(frame3)])
-  frame3_small <- frame3[, c(1, 18)]
-  frames <- cbind(frame1_small, frame2_small, frame3_small)
+  temp <- meta_theta_df_refugees[meta_theta_df_refugees$country == mycountry, ]
+  
+  temp_date <- aggregate(temp[,7:36],
+                         by=list(temp$date), FUN="mean")
+  
+  frame_con <- temp_date[, conflict] 
+  frame_con$conflict <- rowSums(frame_con[2:ncol(frame_con)])
+  frame_con <- frame_con[,c(1,11)]
+  
+  frame_pol <- temp_date[, politics] 
+  frame_pol$politics <- rowSums(frame_pol[2:ncol(frame_pol)])
+  frame_pol <- frame_pol[,c(1,9)]
+  
+  frame_mor <- temp_date[, moral] 
+  frame_mor$moral <- rowSums(frame_mor[2:ncol(frame_mor)])
+  frame_mor <- frame_mor[,c(1,15)]
+  
+  frames <- cbind(frame_con, frame_pol, frame_mor)
   frames <- frames[, c(1,2,4,6)]
-  frames$country <- mycountry
-  country <- frames
-  openxlsx::write.xlsx(country, file = paste0(mycountry, "_frames.xlsx"))
+  
+  if (mycountry %in% c("Australia", "Kenya", "Rwanda", "Sudan")) {
+    plot <- ggplot(frames, aes(x = Group.1))+
+      geom_smooth(aes(y = conflict),se=F,color="darkorange")+
+      geom_smooth(aes(y = politics), se=F, color = "darkgreen")+
+      geom_smooth(aes(y = moral), se = F, color = "blue")+
+      ylim(0, 0.6) +
+      theme_bw() +
+      xlab("") +
+      ylab("Frame Frequency") +
+      labs(title = mycountry)
+  } else {
+    plot <- ggplot(frames, aes(x = Group.1))+
+      geom_smooth(aes(y = conflict),se=F,color="darkorange")+
+      geom_smooth(aes(y = politics), se=F, color = "darkgreen")+
+      geom_smooth(aes(y = moral), se = F, color = "blue")+
+      ylim(0, 0.6) +
+      theme_bw() +
+      xlab("") +
+      ylab("") +
+      labs(title = mycountry)
+  }
+  
+  plots[[mycountry]] <- plot
 }
-
-
-####Plot frame usage by country
-library(tidyverse)
-
-aus <- ggplot(Australia_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("Frame Frequency") +
-  labs(title = "Australia")
-
-can <- ggplot(Canada_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Canada")
-
-chi <- ggplot(China_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "China")
-
-cyp <- ggplot(Cyprus_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Cyprus")
-
-egy <- ggplot(Egypt_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Egypt")
-
-hk <- ggplot(Hong_Kong_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("Frame Frequency") +
-  labs(title = "Hong Kong")
-
-ind <- ggplot(India_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "India")
-
-egy <- ggplot(Egypt_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Egypt")
-
-ira <- ggplot(Iran_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Iran")
-
-ire <- ggplot(Ireland_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Ireland")
-
-isr <- ggplot(Israel_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Israel")
-
-jor <- ggplot(Jordan_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("Frame Frequency") +
-  labs(title = "Jordan")
-
-ken <- ggplot(Kenya_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Kenya")
-
-leb <- ggplot(Lebanon_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Lebanon")
-
-mor <- ggplot(Morocco_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Morocco")
-
-nz <- ggplot(New_Zealand_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "New Zealand")
-
-nig <- ggplot(Nigeria_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("Frame Frequency") +
-  labs(title = "Nigeria")
-
-pak <- ggplot(Pakistan_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Pakistan")
-
-qat <- ggplot(Qatar_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Qatar")
-
-rwa <- ggplot(Rwanda_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Rwanda")
-
-sau <- ggplot(Saudi_Arabia_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("Frame Frequency") +
-  labs(title = "Saudi Arabia")
-
-sin <- ggplot(Singapore_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Singapore")
-
-saf <- ggplot(South_Africa_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "South Africa")
-
-sok <- ggplot(South_Korea_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "South Korea")
-
-sud <- ggplot(Sudan_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Sudan")
-
-tha <- ggplot(Thailand_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Thailand")
-
-tur <- ggplot(Turkey_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("Date") +
-  ylab("Frame Frequency") +
-  labs(title = "Turkey")
-
-uga <- ggplot(Uganda_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("Date") +
-  ylab("Frame Frequency") +
-  labs(title = "Uganda")
-
-uk <- ggplot(UK_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("Date") +
-  ylab("") +
-  labs(title = "United Kingdom")
-
-uae <- ggplot(United_Arab_Emirates_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("Date") +
-  ylab("") +
-  labs(title = "United Arab Emirates")
-
-us <- ggplot(US_frames, aes(x = Group.1))+
-  geom_smooth(aes(y = solutions),se=F,color="darkgreen")+
-  geom_smooth(aes(y = conflict), se=F, color = "blue")+
-  geom_smooth(aes(y = politics), se = F, color = "darkorange")+
-  ylim(0, 0.6) +
-  theme_bw() +
-  xlab("Date") +
-  ylab("") +
-  labs(title = "United States")
 
 library(grid)
 library(gridExtra)
 
-grid.arrange(aus, can, chi, cyp, egy, hk,ind, ira, ire, isr, jor, ken, leb,
-             mor, nz, nig, pak, qat, rwa, saf, sau, sin, sok, sud, tha, tur, 
-             uae, uga, uk, us, ncol=5)
+grid.arrange(plots[[1]],plots[[2]],plots[[3]],plots[[4]],plots[[5]],plots[[6]],
+             plots[[7]],plots[[8]],plots[[9]],plots[[10]],plots[[11]],plots[[12]],
+             plots[[13]],plots[[14]],plots[[15]],plots[[16]],plots[[17]],ncol=5)
